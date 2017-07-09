@@ -7,11 +7,11 @@ class WarcraftLogApi():
 	encounterRankingsUrl = "rankings/encounter/{encounterID}"
 	lastCheck = 0
 
-	def __init__(self, apikey = "", guild = "Resolve", server = "Kilrogg", region = "EU"):
-		self.guild = guild
-		self.server = server
-		self.region = region
-		self.apikey = apikey
+	def __init__(self, config):
+		self.guild  = config['guild']
+		self.server = config['server']
+		self.region = config['region']
+		self.apikey = config['apikey']
 
 	def getRankings(self,encounterId):
 		url = self.baseUrl + self.encounterRankingsUrl.format(
