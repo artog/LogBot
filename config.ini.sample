@@ -1,2 +1,9 @@
-[default]
+[warcraftlogs]
 apikey=
+server=
+guild=
+region=
+
+[discord]
+token=
+channel=
