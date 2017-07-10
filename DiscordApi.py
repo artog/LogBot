@@ -1,4 +1,3 @@
-# from oauth_hook import OAuthHook
 import requests
 import sys
 import json

@@ -5,7 +5,7 @@ class WarcraftLogApi():
 	reportsUrl = "reports/guild/{guildName}/{serverName}/{serverRegion}"
 	fightsUrl = "report/fights/{code}"
 	encounterRankingsUrl = "rankings/encounter/{encounterID}"
-	lastCheck = 0
+	#lastCheck = 0
 
 	def __init__(self, config):
 		self.guild  = config['guild']
@@ -21,11 +21,11 @@ class WarcraftLogApi():
 		return response
 
 
-	def getFights(self,reportCode, killsOnly = True):
+	def getFights(self,reportCode, killsOnly = True, start = 0):
 		url = self.baseUrl + self.fightsUrl.format(
 			code=reportCode,
 		)
-		response = requests.get(url, params={'api_key':self.apikey,'start':self.lastCheck})
+		response = requests.get(url, params={'api_key':self.apikey,'start':start})
 		# print(response.json()['fights'])
 		fights = []
 		for fight in response.json()['fights']:

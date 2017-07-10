@@ -19,6 +19,7 @@ class LogBot():
         try:
             self.discordApi = DiscordApi(config['discord'])
             self.logApi = WarcraftLogApi(config['warcraftlogs'])
+            self.pollingThread = PollingThread(2,self.logApi, self.discordApi)
         except Exception as e:
             print("Error starting apis: {0}".format(repr(e)))
             exit(1)
@@ -36,14 +37,15 @@ class LogBot():
         self.discordApi.getChannel()
 
     def startPolling(self):
-        pass
+        self.pollingThread.start()
 
     def stopPolling(self):
-        pass
+        self.pollingThread.active = False;
 
     def startCLI(self):
         while True:
-            parts = input("LogBot> ").split(" ")
+            print("LogBot> ",end="")
+            parts = input("").split(" ")
             cmd = parts[0]
             args = parts[1:]
             if cmd in ["q","quit"]:
@@ -64,6 +66,9 @@ class LogBot():
 
             elif cmd in ["stop"]:
                 self.stopPolling()
+
+            elif cmd in ["debug"]:
+                self.pollingThread.doPoll()
 
         
 
