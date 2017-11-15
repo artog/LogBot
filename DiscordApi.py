@@ -1,50 +1,56 @@
-import requests
-import sys
-import json
-import uuid
+import discord
+import asyncio
+import threading
+import Message
+import Data
 
-class DiscordApi():
-    baseUrl = "https://discordapp.com/api"
 
-    def get(self, url):
-        return self.client.get(self.baseUrl+url)
+class DiscordApi(threading.Thread):
 
-    def post(self,url, payload):
-        return self.client.post(
-            self.baseUrl+url,
-            data=json.dumps(payload),
-            headers={'Content-Type':'application/json'}
-        )
+    ids = []
 
-    def __init__(self, config):
+    def __init__(self, config, data : Data):
+        threading.Thread.__init__(self)
+        self.config = config
+        self.token   = config['token']
+        self.channelId = str(config['channel'])
+        self.client = discord.Client()
+        self.data = data
+        self.channel = discord.Object(id=self.channelId)
+
+    async def handleMessages(self):
+        await self.client.wait_until_ready()
+        counter = 0
+        while not self.client.is_closed:
+            print("Starting discord iteration")
+            counter += 1
+            for id, report in self.data.reports.items():
+                if report.isDirty():
+                    print("Report ",id,"is dirty.")
+                    if report.messageId == 0:
+                        print("Sending:",report.message)
+                        self.data.reports[id].messageId = await self.sendMessage(report.message)
+                    else:
+                        print("Editing ",report.messageId,":",report.message)
+                        await self.editMessage(report.messageId, report.message)
+                    self.data.reports[id].clean()
+            await asyncio.sleep(15)  # task runs every 15 seconds
+
+    def run(self):
+        self.client.loop.create_task(self.handleMessages())
+        self.client.run(self.token)
+
+    async def sendMessage(self, message):
+        print("Sent",message)
         try:
-            self.config = config
-            self.token   = config['token']
-            self.channel = config['channel']
-            
-            self.client = requests.session()
-            self.client.headers.update({
-                'Authorization': "Bot "+self.token,
-                'User-Agent': "DiscordBot (artog.ddns.net, 1.0) Python/{0[0]}.{0[1]} requests".format(sys.version_info),
-            })
+            msg = await  self.client.send_message(self.channel ,message)
+            return msg
+        except discord.DiscordException as ex:
+            print("Error when sending message:",ex)
+        return 0
 
-        except Exception as e:
-            raise e
-
-    def getChannel(self):
-        url = "/channels/{channelId}".format(channelId=self.channel)
-        print(self.get(url).text)
+    async def editMessage(self,msgId, newMessage):
+        self.client.edit_message(msgId, newMessage)
 
 
-    def sendMessage(self, message):
-        url = "/channels/{channelId}/messages".format(channelId=self.channel)
-        payload = {
-            "content":message,
-            "nonce": str(uuid.uuid1())[0:25]
-        }
-        r = self.post(url, payload)
-        print(r.status_code)
-        print(r.text)
-        print("\"sent\" %s" % (message))
-        pass
-        
+

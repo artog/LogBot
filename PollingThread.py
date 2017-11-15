@@ -1,8 +1,12 @@
 import time
 import threading
-import requests
+
 from WarcraftLogApi import WarcraftLogApi
 from DiscordApi import DiscordApi
+from Fight import Fight
+from Report import Report
+from Data import Data
+from Message import Message
 
 class PollingThread(threading.Thread):
     active = True
@@ -10,8 +14,13 @@ class PollingThread(threading.Thread):
     latestLog = ""
     latestFight = 0
     latestFightStart = 0
+    latestMessage = 0
+    currentMessage = ""
 
-    def __init__(self, delay, api, discord):
+    # @type data: Data
+    data = []
+
+    def __init__(self, delay : int, api : WarcraftLogApi, data : Data):
         """
           @type api: WarcraftLogApi
           @type discord: DiscordApi
@@ -20,7 +29,7 @@ class PollingThread(threading.Thread):
         self.delay = delay
         self.lock = threading.Lock()
         self.active = True
-        self.discord = discord
+        self.data = data
         self.api = api
 
     def start(self):
@@ -35,27 +44,40 @@ class PollingThread(threading.Thread):
             time.sleep(self.delay)
 
     def doPoll(self):
-        report = self.api.getReports(self.latestTime).json()
-        if (len(report) == 0):
+
+        oneDay = 60*60*24
+        startTime = (time.time() - 7*oneDay) * 1000
+        reports = self.api.getReports(startTime).json()
+        if (len(reports) == 0):
             return
 
-        latest = report[-1]
-        if (latest['start'] > self.latestTime):
-            self.latestTime = latest['start']
-            self.latestLog = latest['id']
-            print("New log!")
-            print(latest)
-            wlUrl = "https://www.warcraftlogs.com/reports/"
-            self.discord.sendMessage("{0}: {1}{2}".format(latest['title'],wlUrl, latest['id']))
+        for report in reports:
+            id = report['id']
+            fights = self.api.getFights(id)
+            if not report['id'] in self.data.reports.keys():
+                self.data.reports[id] = Report(
+                    id,
+                    report['title'],
+                    report['owner'],
+                    int(report['start']))
+                print("New log!")
+            if len(self.data.reports[id].fights) < len(fights):
+                print("New fight!")
+                self.data.reports[id].dirty = True
+                for fight in fights:
+                    fightId = fight['id']
+                    if not fightId in self.data.reports[id].fights.keys():
+                        newFight = Fight(fightId, fight['name'],id)
+                        self.data.reports[id].addFight(newFight)
+            for id, report in self.data.reports.items():
+                if report.isDirty():
+                    self.data.reports[id].message = report.getFormattedChatMessage()
+                if report.startTime < (time.time() - 14*oneDay) * 1000:
+                    self.data.reports.pop(id, None)
 
-        fights = self.api.getFights(self.latestLog)
-        if (len(fights) == 0):
-            return
 
-        fight = fights[-1]
-        if (self.latestFightStart > fight['start_time']):
-            self.latestFight = fight['id']
-            self.latestFightStart = fight['start_time']
+    def sendMessage(self,message):
+        self.data.messages.append(Message(message))
 
-        print(latest)
-        print(fights)
+    def editMessage(self,messageId, message):
+        self.data.messages.append(Message(messageId, message))
