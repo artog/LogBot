@@ -37,9 +37,9 @@ class PollingThread(threading.Thread):
         self.active = True
 
     def run(self):
-        print("Starting polling")
+        # print("Starting polling")
         while self.active:
-            print("Polling server")
+            # print("Polling server")
             self.doPoll()
             time.sleep(self.delay)
 

@@ -22,16 +22,16 @@ class DiscordApi(threading.Thread):
         await self.client.wait_until_ready()
         counter = 0
         while not self.client.is_closed:
-            print("Starting discord iteration")
+            # print("Starting discord iteration")
             counter += 1
             for id, report in self.data.reports.items():
                 if report.isDirty():
-                    print("Report ",id,"is dirty.")
+                    # print("Report ",id,"is dirty.")
                     if report.messageId == 0:
-                        print("Sending:",report.message)
+                        # print("Sending:",report.message)
                         self.data.reports[id].messageId = await self.sendMessage(report.message)
                     else:
-                        print("Editing ",report.messageId,":",report.message)
+                        # print("Editing ",report.messageId,":",report.message)
                         await self.editMessage(report.messageId, report.message)
                     self.data.reports[id].clean()
             await asyncio.sleep(15)  # task runs every 15 seconds
@@ -41,7 +41,7 @@ class DiscordApi(threading.Thread):
         self.client.run(self.token)
 
     async def sendMessage(self, message):
-        print("Sent",message)
+        # print("Sent",message)
         try:
             msg = await  self.client.send_message(self.channel ,message)
             return msg

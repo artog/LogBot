@@ -23,7 +23,7 @@ class WarcraftLogApi():
         url = self.baseUrl + self.encounterRankingsUrl.format(
             encounterID=encounterId
         )
-        print("Sending", url)
+        # print("Sending", url)
         response = requests.get(url, params={'api_key': self.apikey})
         return response
 

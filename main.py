@@ -35,7 +35,7 @@ class LogBot():
             print("Initializing polling thread")
             self.pollingThread = PollingThread(2,self.logApi, self.data)
 
-
+            startCLI()
 
         except Exception as e:
             print("Error starting apis: {0}".format(repr(e)))
@@ -90,7 +90,7 @@ class LogBot():
         
 
 def main():
-     LogBot().startCLI()
+     bot = LogBot()
 
 if __name__ == "__main__":
     logging.getLogger('discord').addHandler(logging.StreamHandler())
