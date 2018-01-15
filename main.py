@@ -35,7 +35,7 @@ class LogBot():
             print("Initializing polling thread")
             self.pollingThread = PollingThread(2,self.logApi, self.data)
 
-            startCLI()
+            self.startCLI()
 
         except Exception as e:
             print("Error starting apis: {0}".format(repr(e)))
